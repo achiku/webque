@@ -14,7 +14,7 @@ import (
 
 // LoadRequest add load request
 func LoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	res := MessageResponse{Data: StatusMessage{Message: "load request"}}
+	res := MessageResponse{Data: StatusMessage{Message: "request accepted", RequestID: 11}}
 	json.NewEncoder(w).Encode(res)
 }
 
