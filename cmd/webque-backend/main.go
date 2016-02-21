@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/achiku/webque"
 )
 
 func main() {
-	fmt.Printf("Hello, world\n")
+	log.Println("starting backend service...")
 	webque.BackendRun()
 }

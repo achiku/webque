@@ -1,3 +1,7 @@
+-- for backend service
+-- CREATE USER webque_backend;
+-- CREATE DATABASE webque_backend OWNER webque_backend;
+
 CREATE TABLE account (
   id          serial    PRIMARY KEY
   ,name       text      NOT NULL

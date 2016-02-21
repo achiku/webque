@@ -1,3 +1,7 @@
+-- for proxy service
+-- CREATE USER webque_proxy;
+-- CREATE DATABASE webque_proxy OWNER webque_proxy;
+
 CREATE TABLE que_jobs (
   priority    smallint    NOT NULL DEFAULT 100,
   run_at      timestamptz NOT NULL DEFAULT now(),

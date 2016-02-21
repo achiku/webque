@@ -12,10 +12,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-const (
-	ctxKeyDB = "db"
-)
-
 // LoadRequest add load request
 func LoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	res := MessageResponse{Data: StatusMessage{Message: "load request"}}
@@ -57,7 +53,7 @@ func NotFound(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 func ProxyRun() {
 	fmt.Println("starting proxy service...")
 
-	pool, err := NewDB("postgresql://localhost/webque_proxy")
+	db, err := NewDB("postgresql://localhost/webque_proxy")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +63,7 @@ func ProxyRun() {
 	c.Use(loggingMiddleware)
 	c.Use(jsonResponseMiddleware)
 	rootCtx := context.Background()
-	context.WithValue(rootCtx, ctxKeyDB, pool)
+	context.WithValue(rootCtx, ctxKeyDB, db)
 
 	mux := xmux.New()
 	mux.NotFound = xhandler.HandlerFuncC(NotFound)
