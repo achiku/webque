@@ -1,0 +1,6 @@
+gom 'github.com/rs/xhandler'
+gom 'github.com/rs/xmux'
+gom 'golang.org/x/net/context'
+gom 'github.com/bgentry/que-go'
+gom 'github.com/jackc/pgx'
+gom 'github.com/gocraft/dbr'
