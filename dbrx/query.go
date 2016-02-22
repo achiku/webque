@@ -1,4 +1,4 @@
-package qb
+package dbrx
 
 import (
 	"github.com/gocraft/dbr"

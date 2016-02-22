@@ -1,4 +1,4 @@
-package qb
+package dbrx
 
 import "testing"
 
