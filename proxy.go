@@ -16,7 +16,20 @@ import (
 
 // CreateLoadRequest add load request
 func CreateLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	res := MessageResponse{Data: StatusMessage{Message: "request accepted", RequestID: 11}}
+	accountID, _ := strconv.Atoi(xmux.Param(ctx, "accountID"))
+	db := ctx.Value(ctxKeyDB).(*pgx.ConnPool)
+	tx, _ := db.Begin()
+	req := LoadRequestRequest{
+		AccountID: accountID,
+		Amount:    1000,
+	}
+	if err := CreateLoadRequestService(tx, req); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		res := MessageResponse{Data: StatusMessage{Message: "failed"}}
+		json.NewEncoder(w).Encode(res)
+	}
+	tx.Commit()
+	res := MessageResponse{Data: StatusMessage{Message: "request created"}}
 	json.NewEncoder(w).Encode(res)
 }
 

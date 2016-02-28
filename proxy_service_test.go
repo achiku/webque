@@ -24,7 +24,7 @@ func createUserTestData(tx *pgx.Tx) error {
 	return nil
 }
 
-func TestLoadRequestService(t *testing.T) {
+func TestGetLoadRequestService(t *testing.T) {
 	db, err := NewDB("postgresql://localhost/webque_proxy")
 	if err != nil {
 		t.Fatal(err)
@@ -43,4 +43,25 @@ func TestLoadRequestService(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(resp)
+}
+
+func TestCreateLoadRequestService(t *testing.T) {
+	db, err := NewDB("postgresql://localhost/webque_proxy")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := LoadRequestRequest{
+		AccountID: 1,
+		Amount:    10000,
+	}
+	tx, err := db.Begin()
+	defer tx.Rollback()
+	if err = createUserTestData(tx); err != nil {
+		t.Error(err)
+	}
+
+	if err := CreateLoadRequestService(tx, req); err != nil {
+		t.Error(err)
+	}
 }

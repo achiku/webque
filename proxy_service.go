@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx"
 )
 
-// GetLoadRequestService create load request
+// GetLoadRequestService get load request
 func GetLoadRequestService(tx *pgx.Tx, req GetLoadRequestRequest) ([]LoadRequestModel, error) {
 	var reqs []LoadRequestModel
 	stmt := dbr.Select(
@@ -54,4 +54,20 @@ func GetLoadRequestService(tx *pgx.Tx, req GetLoadRequestRequest) ([]LoadRequest
 		reqs = append(reqs, r)
 	}
 	return reqs, nil
+}
+
+// CreateLoadRequestService creates load request
+func CreateLoadRequestService(tx *pgx.Tx, req LoadRequestRequest) error {
+	stmt := dbr.InsertInto("load_request").
+		Columns("account_id", "amount").
+		Values(req.AccountID, req.Amount)
+	query, err := ToInsertSQL(stmt)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
 }
