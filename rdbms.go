@@ -1,10 +1,6 @@
 package webque
 
-import (
-	"github.com/gocraft/dbr"
-	"github.com/gocraft/dbr/dialect"
-	"github.com/jackc/pgx"
-)
+import "github.com/jackc/pgx"
 
 // NewDB create DB
 func NewDB(dbURI string) (*pgx.ConnPool, error) {
@@ -21,32 +17,4 @@ func NewDB(dbURI string) (*pgx.ConnPool, error) {
 		return nil, err
 	}
 	return pool, nil
-}
-
-// ToSelectSQL create select sql string
-func ToSelectSQL(stmt *dbr.SelectStmt) (string, error) {
-	builder := &dbr.SelectBuilder{
-		Dialect:    dialect.PostgreSQL,
-		SelectStmt: stmt,
-	}
-	sql, value := builder.ToSql()
-	query, err := dbr.InterpolateForDialect(sql, value, dialect.PostgreSQL)
-	if err != nil {
-		return "", err
-	}
-	return query, nil
-}
-
-// ToInsertSQL create insert sql string
-func ToInsertSQL(stmt *dbr.InsertStmt) (string, error) {
-	builder := &dbr.InsertBuilder{
-		Dialect:    dialect.PostgreSQL,
-		InsertStmt: stmt,
-	}
-	sql, value := builder.ToSql()
-	query, err := dbr.InterpolateForDialect(sql, value, dialect.PostgreSQL)
-	if err != nil {
-		return "", err
-	}
-	return query, nil
 }

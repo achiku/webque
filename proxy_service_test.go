@@ -14,6 +14,13 @@ func createUserTestData(tx *pgx.Tx) error {
 			return err
 		}
 	}
+	_, err := tx.Exec(`
+	insert into load_request (account_id, amount, completed) 
+	values (1, 1000, false)
+	`)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
