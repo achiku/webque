@@ -16,3 +16,8 @@ type Account struct {
 	ID   int    `json:"accountID"`
 	Name string `json:"name"`
 }
+
+// LoadRequestResponse struct
+type LoadRequestResponse struct {
+	Data []LoadRequestModel `json:"data"`
+}

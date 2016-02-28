@@ -9,14 +9,14 @@ import (
 func createUserTestData(tx *pgx.Tx) error {
 	users := []string{"achiku", "moqada", "ideyuta"}
 	for _, u := range users {
-		_, err := tx.Exec(`insert into account (name) values ($1)`, u)
+		_, err := tx.Exec(`INSERT INTO account (name) VALUES ($1)`, u)
 		if err != nil {
 			return err
 		}
 	}
 	_, err := tx.Exec(`
-	insert into load_request (account_id, amount, completed) 
-	values (1, 1000, false)
+	INSERT INTO load_request (account_id, amount, completed) 
+	VALUES (1, 1000, false), (1, 4000, false) , (1, 11000, false)
 	`)
 	if err != nil {
 		return err
@@ -30,16 +30,15 @@ func TestLoadRequestService(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := LoadRequestRequest{
+	req := GetLoadRequestRequest{
 		AccountID: 1,
-		Amount:    1000,
 	}
 	tx, err := db.Begin()
 	defer tx.Rollback()
 	if err = createUserTestData(tx); err != nil {
 		t.Error(err)
 	}
-	resp, err := LoadRequestService(tx, req)
+	resp, err := GetLoadRequestService(tx, req)
 	if err != nil {
 		t.Error(err)
 	}

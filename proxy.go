@@ -5,27 +5,41 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/jackc/pgx"
 	"github.com/rs/xhandler"
 	"github.com/rs/xmux"
 
 	"golang.org/x/net/context"
 )
 
-// LoadRequest add load request
-func LoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+// CreateLoadRequest add load request
+func CreateLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	res := MessageResponse{Data: StatusMessage{Message: "request accepted", RequestID: 11}}
 	json.NewEncoder(w).Encode(res)
 }
 
 // GetLoadRequest get load requests
 func GetLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	res := MessageResponse{Data: StatusMessage{Message: "get load request"}}
+	accountID, _ := strconv.Atoi(xmux.Param(ctx, "accountID"))
+	db := ctx.Value(ctxKeyDB).(*pgx.ConnPool)
+	tx, _ := db.Begin()
+	req := GetLoadRequestRequest{
+		AccountID: accountID,
+	}
+	loadRequests, err := GetLoadRequestService(tx, req)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		res := MessageResponse{Data: StatusMessage{Message: "failed"}}
+		json.NewEncoder(w).Encode(res)
+	}
+	res := LoadRequestResponse{Data: loadRequests}
 	json.NewEncoder(w).Encode(res)
 }
 
-// TransferRequest add transfer request
-func TransferRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+// CreateTransferRequest add transfer request
+func CreateTransferRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	res := MessageResponse{Data: StatusMessage{Message: "transfer request"}}
 	json.NewEncoder(w).Encode(res)
 }
@@ -63,17 +77,17 @@ func ProxyRun() {
 	c.Use(loggingMiddleware)
 	c.Use(jsonResponseMiddleware)
 	rootCtx := context.Background()
-	context.WithValue(rootCtx, ctxKeyDB, db)
+	rootCtx = context.WithValue(rootCtx, ctxKeyDB, db)
 
 	mux := xmux.New()
 	mux.NotFound = xhandler.HandlerFuncC(NotFound)
 
 	api := mux.NewGroup("/api")
-	api.POST("/load", xhandler.HandlerFuncC(LoadRequest))
-	api.POST("/transfer", xhandler.HandlerFuncC(TransferRequest))
-	api.GET("/load", xhandler.HandlerFuncC(GetLoadRequest))
-	api.GET("/transfer", xhandler.HandlerFuncC(GetTransferRequest))
-	api.GET("/deposit", xhandler.HandlerFuncC(GetCurrentDeposit))
+	api.POST("/load/:accountID", xhandler.HandlerFuncC(CreateLoadRequest))
+	api.POST("/transfer/:accountID", xhandler.HandlerFuncC(CreateTransferRequest))
+	api.GET("/load/:accountID", xhandler.HandlerFuncC(GetLoadRequest))
+	api.GET("/transfer/:accountID", xhandler.HandlerFuncC(GetTransferRequest))
+	api.GET("/deposit/:accountID", xhandler.HandlerFuncC(GetCurrentDeposit))
 
 	if err := http.ListenAndServe(":8899", c.HandlerCtx(rootCtx, mux)); err != nil {
 		log.Fatal(err)

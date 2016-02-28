@@ -1,5 +1,10 @@
 package webque
 
+// GetLoadRequestRequest load request
+type GetLoadRequestRequest struct {
+	AccountID int `json:"accountId"`
+}
+
 // LoadRequestRequest load request struct
 type LoadRequestRequest struct {
 	AccountID int `json:"accountId"`
