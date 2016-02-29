@@ -1,6 +1,9 @@
 package webque
 
-import "github.com/jackc/pgx"
+import (
+	"github.com/bgentry/que-go"
+	"github.com/jackc/pgx"
+)
 
 // NewDB create DB
 func NewDB(dbURI string) (*pgx.ConnPool, error) {
@@ -11,6 +14,7 @@ func NewDB(dbURI string) (*pgx.ConnPool, error) {
 	poolcfg := pgx.ConnPoolConfig{
 		ConnConfig:     pgxcfg,
 		MaxConnections: 5,
+		AfterConnect:   que.PrepareStatements,
 	}
 	pool, err := pgx.NewConnPool(poolcfg)
 	if err != nil {

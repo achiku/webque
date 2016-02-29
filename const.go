@@ -1,5 +1,6 @@
 package webque
 
 const (
-	ctxKeyDB = "db"
+	ctxKeyDB        = "db"
+	ctxKeyQueClient = "queclient"
 )

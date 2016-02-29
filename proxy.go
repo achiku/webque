@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	que "github.com/bgentry/que-go"
 	"github.com/jackc/pgx"
 	"github.com/rs/xhandler"
 	"github.com/rs/xmux"
@@ -18,16 +20,27 @@ import (
 func CreateLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	accountID, _ := strconv.Atoi(xmux.Param(ctx, "accountID"))
 	db := ctx.Value(ctxKeyDB).(*pgx.ConnPool)
+	qc := ctx.Value(ctxKeyQueClient).(*que.Client)
 	tx, _ := db.Begin()
+	defer tx.Rollback()
+
 	req := LoadRequestRequest{
 		AccountID: accountID,
 		Amount:    1000,
 	}
 	if err := CreateLoadRequestService(tx, req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		res := MessageResponse{Data: StatusMessage{Message: "failed"}}
+		res := MessageResponse{Data: StatusMessage{Message: err.Error()}}
 		json.NewEncoder(w).Encode(res)
+		return
 	}
+	if err := qc.EnqueueInTx(&que.Job{Type: "HelloJob"}, tx); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		res := MessageResponse{Data: StatusMessage{Message: err.Error()}}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
 	tx.Commit()
 	res := MessageResponse{Data: StatusMessage{Message: "request created"}}
 	json.NewEncoder(w).Encode(res)
@@ -38,6 +51,8 @@ func GetLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request)
 	accountID, _ := strconv.Atoi(xmux.Param(ctx, "accountID"))
 	db := ctx.Value(ctxKeyDB).(*pgx.ConnPool)
 	tx, _ := db.Begin()
+	defer tx.Rollback()
+
 	req := GetLoadRequestRequest{
 		AccountID: accountID,
 	}
@@ -46,6 +61,7 @@ func GetLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusInternalServerError)
 		res := MessageResponse{Data: StatusMessage{Message: "failed"}}
 		json.NewEncoder(w).Encode(res)
+		return
 	}
 	res := LoadRequestResponse{Data: loadRequests}
 	json.NewEncoder(w).Encode(res)
@@ -84,6 +100,17 @@ func ProxyRun() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	qc, err := NewQueClient("postgresql://localhost/webque_proxy")
+	if err != nil {
+		log.Fatal(err)
+	}
+	wm := que.WorkMap{
+		"HelloJob": HelloJob,
+	}
+	log.Println("create worker pool")
+	workers := que.NewWorkerPool(qc, wm, 2)
+	workers.Interval = 2 * time.Second
+	go workers.Start()
 
 	c := xhandler.Chain{}
 	c.Use(recoverMiddleware)
@@ -91,6 +118,7 @@ func ProxyRun() {
 	c.Use(jsonResponseMiddleware)
 	rootCtx := context.Background()
 	rootCtx = context.WithValue(rootCtx, ctxKeyDB, db)
+	rootCtx = context.WithValue(rootCtx, ctxKeyQueClient, qc)
 
 	mux := xmux.New()
 	mux.NotFound = xhandler.HandlerFuncC(NotFound)
