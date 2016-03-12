@@ -11,8 +11,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// CurrentDeposit create/update current deposit
-func CurrentDeposit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+// UpdateCurrentDeposit create/update current deposit
+func UpdateCurrentDeposit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	res := MessageResponse{Data: StatusMessage{Message: "current deposit"}}
 	json.NewEncoder(w).Encode(res)
 }
@@ -21,7 +21,7 @@ func CurrentDeposit(ctx context.Context, w http.ResponseWriter, r *http.Request)
 func BackendRun() {
 	fmt.Println("starting backend service...")
 
-	db, err := NewDB("postgresql://localhost/webque_backend")
+	db, err := NewBackendDB("postgresql://localhost/webque_backend")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,9 +35,8 @@ func BackendRun() {
 
 	mux := xmux.New()
 	mux.NotFound = xhandler.HandlerFuncC(NotFound)
-
 	api := mux.NewGroup("/api")
-	api.POST("/deposit", xhandler.HandlerFuncC(CurrentDeposit))
+	api.POST("/deposit", xhandler.HandlerFuncC(UpdateCurrentDeposit))
 
 	if err := http.ListenAndServe(":8889", c.HandlerCtx(rootCtx, mux)); err != nil {
 		log.Fatal(err)

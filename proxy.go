@@ -1,7 +1,6 @@
 package webque
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -15,9 +14,8 @@ import (
 
 // ProxyRun runs proxy service
 func ProxyRun() {
-	fmt.Println("starting proxy service...")
-
-	db, err := NewDB("postgresql://localhost/webque_proxy")
+	log.Println("starting proxy service...")
+	db, err := NewProxyDB("postgresql://localhost/webque_proxy")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,7 +24,8 @@ func ProxyRun() {
 		log.Fatal(err)
 	}
 	wm := que.WorkMap{
-		"HelloJob": HelloJob,
+		"HelloJob":         HelloJob,
+		"UpdateDepositJob": UpdateDepositJob,
 	}
 	log.Println("create worker pool")
 	workers := que.NewWorkerPool(qc, wm, 2)
@@ -45,10 +44,11 @@ func ProxyRun() {
 	mux.NotFound = xhandler.HandlerFuncC(NotFound)
 
 	api := mux.NewGroup("/api")
-	api.POST("/load/:accountID", xhandler.HandlerFuncC(CreateLoadRequest))
-	api.POST("/transfer/:accountID", xhandler.HandlerFuncC(CreateTransferRequest))
-	api.GET("/load/:accountID", xhandler.HandlerFuncC(GetLoadRequest))
-	api.GET("/transfer/:accountID", xhandler.HandlerFuncC(GetTransferRequest))
+	api.POST("/load/request/:accountID", xhandler.HandlerFuncC(CreateLoadRequest))
+	api.PUT("/load/request/:requestID", xhandler.HandlerFuncC(CompleteLoadRequest))
+	api.POST("/transfer/request/:accountID", xhandler.HandlerFuncC(CreateTransferRequest))
+	api.GET("/load/request/:accountID", xhandler.HandlerFuncC(GetLoadRequest))
+	api.GET("/transfer/request/:accountID", xhandler.HandlerFuncC(GetTransferRequest))
 	api.GET("/deposit/:accountID", xhandler.HandlerFuncC(GetCurrentDeposit))
 
 	if err := http.ListenAndServe(":8899", c.HandlerCtx(rootCtx, mux)); err != nil {

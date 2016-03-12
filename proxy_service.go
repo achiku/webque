@@ -71,3 +71,19 @@ func CreateLoadRequestService(tx *pgx.Tx, req LoadRequestRequest) error {
 	}
 	return nil
 }
+
+// UpdateLoadRequestService updates load request
+func UpdateLoadRequestService(tx *pgx.Tx, req LoadRequestRequest) error {
+	stmt := dbr.Update("load_request").
+		Set("completed", true).
+		Where("id = ?", req.RequestID)
+	query, err := ToUpdateSQL(stmt)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}

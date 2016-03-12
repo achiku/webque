@@ -178,3 +178,18 @@ func ToInsertSQL(stmt *dbr.InsertStmt) (string, error) {
 	}
 	return query, nil
 }
+
+// ToUpdateSQL create update sql string
+func ToUpdateSQL(stmt *dbr.UpdateStmt) (string, error) {
+	builder := &dbr.UpdateBuilder{
+		Dialect:    dialect.PostgreSQL,
+		UpdateStmt: stmt,
+		LimitCount: -1,
+	}
+	sql, value := builder.ToSql()
+	query, err := dbr.InterpolateForDialect(sql, value, dialect.PostgreSQL)
+	if err != nil {
+		return "", err
+	}
+	return query, nil
+}

@@ -7,6 +7,7 @@ type GetLoadRequestRequest struct {
 
 // LoadRequestRequest load request struct
 type LoadRequestRequest struct {
+	RequestID int `json:"id"`
 	AccountID int `json:"accountId"`
 	Amount    int `json:"amount"`
 }

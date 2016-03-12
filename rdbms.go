@@ -5,16 +5,31 @@ import (
 	"github.com/jackc/pgx"
 )
 
-// NewDB create DB
-func NewDB(dbURI string) (*pgx.ConnPool, error) {
+// NewProxyDB create DB
+func NewProxyDB(dbURI string) (*pgx.ConnPool, error) {
 	pgxcfg, err := pgx.ParseURI(dbURI)
 	if err != nil {
 		return nil, err
 	}
 	poolcfg := pgx.ConnPoolConfig{
-		ConnConfig:     pgxcfg,
-		MaxConnections: 5,
-		AfterConnect:   que.PrepareStatements,
+		ConnConfig:   pgxcfg,
+		AfterConnect: que.PrepareStatements,
+	}
+	pool, err := pgx.NewConnPool(poolcfg)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
+// NewBackendDB create DB
+func NewBackendDB(dbURI string) (*pgx.ConnPool, error) {
+	pgxcfg, err := pgx.ParseURI(dbURI)
+	if err != nil {
+		return nil, err
+	}
+	poolcfg := pgx.ConnPoolConfig{
+		ConnConfig: pgxcfg,
 	}
 	pool, err := pgx.NewConnPool(poolcfg)
 	if err != nil {

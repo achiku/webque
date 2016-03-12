@@ -41,6 +41,35 @@ func CreateLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(res)
 }
 
+// CompleteLoadRequest update completed status
+func CompleteLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	requestID, _ := strconv.Atoi(xmux.Param(ctx, "requestID"))
+	db := ctx.Value(ctxKeyDB).(*pgx.ConnPool)
+	qc := ctx.Value(ctxKeyQueClient).(*que.Client)
+	tx, _ := db.Begin()
+	defer tx.Rollback()
+
+	req := LoadRequestRequest{
+		RequestID: requestID,
+	}
+	if err := UpdateLoadRequestService(tx, req); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		res := MessageResponse{Data: StatusMessage{Message: err.Error()}}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	if err := qc.EnqueueInTx(&que.Job{Type: "HelloJob"}, tx); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		res := MessageResponse{Data: StatusMessage{Message: err.Error()}}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	tx.Commit()
+	res := MessageResponse{Data: StatusMessage{Message: "request updated"}}
+	json.NewEncoder(w).Encode(res)
+}
+
 // GetLoadRequest get load requests
 func GetLoadRequest(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	accountID, _ := strconv.Atoi(xmux.Param(ctx, "accountID"))
